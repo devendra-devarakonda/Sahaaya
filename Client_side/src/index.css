@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Autofill Fix */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #1f2937 inset !important; /* bg-gray-800 */
+  -webkit-text-fill-color: #fff !important; /* keep text white */
+  caret-color: #fff !important; /* white cursor */
+  transition: background-color 5000s ease-in-out 0s;
+}
