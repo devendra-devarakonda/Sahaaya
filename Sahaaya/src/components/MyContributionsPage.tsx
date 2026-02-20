@@ -1,28 +1,11 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../utils/auth';
+import { getUserDashboardContributions, reportHelpOffer, subscribeToDashboardContributions, unsubscribeChannel } from '../utils/supabaseService';
 import { Card } from './ui/card';
-import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  ArrowLeft,
-  Heart,
-  MapPin,
-  Calendar,
-  DollarSign,
-  MessageSquare,
-  AlertTriangle,
-  AlertCircle,
-  Flag,
-  CheckCircle2,
-  XCircle,
-  Shield
-} from 'lucide-react';
-import {
-  getUserDashboardContributions,
-  reportHelpOffer,
-  subscribeToDashboardContributions,
-  unsubscribeChannel
-} from '../utils/supabaseService';
+import { Heart, MapPin, Calendar, DollarSign, MessageSquare, AlertTriangle, Flag, CheckCircle2, XCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import {
   AlertDialog,
@@ -34,11 +17,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from './ui/alert-dialog';
-
-interface AllContributionsProps {
-  setCurrentPage: (page: string) => void;
-  userProfile?: any;
-}
 
 interface Contribution {
   id: string;
@@ -58,7 +36,8 @@ interface Contribution {
   created_at: string;
 }
 
-export function AllContributions({ setCurrentPage, userProfile }: AllContributionsProps) {
+export function MyContributionsPage() {
+  const { user } = useAuth();
   const [allContributions, setAllContributions] = useState<Contribution[]>([]);
   const [filteredContributions, setFilteredContributions] = useState<Contribution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,9 +49,9 @@ export function AllContributions({ setCurrentPage, userProfile }: AllContributio
     
     // Subscribe to real-time updates
     let subscription: any;
-    if (userProfile?.id) {
+    if (user) {
       subscription = subscribeToDashboardContributions(
-        userProfile.id,
+        user.id,
         () => fetchContributions()
       );
     }
@@ -82,7 +61,7 @@ export function AllContributions({ setCurrentPage, userProfile }: AllContributio
         unsubscribeChannel(subscription);
       }
     };
-  }, [userProfile]);
+  }, [user]);
 
   useEffect(() => {
     // Filter contributions based on active tab
@@ -174,20 +153,10 @@ export function AllContributions({ setCurrentPage, userProfile }: AllContributio
   return (
     <div className="min-h-screen bg-[#f9fefa] py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header with Back Button */}
-        <div className="mb-8 flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentPage('dashboard')}
-            className="border-[#41695e] text-[#41695e] hover:bg-[#e8f5f0]"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-[#033b4a] mb-2">My Contributions</h1>
-            <p className="text-gray-600">Track your help offers and their status</p>
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-[#033b4a] mb-2">My Contributions</h1>
+          <p className="text-gray-600">Track your help offers and their status</p>
         </div>
 
         {/* Tabs for filtering */}
@@ -350,14 +319,14 @@ function ContributionCard({
         <div className="flex items-center gap-3">
           <div className="text-3xl">{getCategoryIcon(contribution.category)}</div>
           <div>
-            <h3 className="text-[#033b4a] mb-1">{contribution.request_title || 'Help Contribution'}</h3>
+            <h3 className="text-[#033b4a] mb-1">{contribution.request_title}</h3>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 {contribution.category}
               </Badge>
-              {contribution.source_type === 'community' && (
+              {contribution.source_type === 'community' && contribution.community_name && (
                 <Badge variant="outline" className="text-xs bg-[#e8f5f0] text-[#41695e] border-[#41695e]">
-                  Community
+                  {contribution.community_name}
                 </Badge>
               )}
               {getStatusBadge(contribution.status, contribution.report_count)}
@@ -371,14 +340,18 @@ function ContributionCard({
         {contribution.amount && (
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
-            <span>Amount: ₹{contribution.amount.toLocaleString()}</span>
+            <span>Amount Needed: ₹{contribution.amount.toLocaleString()}</span>
           </div>
         )}
         
-        {contribution.urgency && (
+        {(contribution.city || contribution.state) && (
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            <span>Urgency: {contribution.urgency}</span>
+            <MapPin className="w-4 h-4" />
+            <span>
+              {contribution.city && contribution.state 
+                ? `${contribution.city}, ${contribution.state}`
+                : contribution.city || contribution.state}
+            </span>
           </div>
         )}
 
@@ -408,7 +381,7 @@ function ContributionCard({
         <div className="flex items-center gap-2 text-sm text-red-700 bg-red-100 p-3 rounded mb-3 border border-red-200">
           <Shield className="w-5 h-5" />
           <div>
-            <p>Flagged as Fraud</p>
+            <p className="font-semibold">Flagged as Fraud</p>
             <p className="text-xs">This contribution was reported by multiple users</p>
           </div>
         </div>

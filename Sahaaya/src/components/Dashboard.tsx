@@ -532,7 +532,7 @@ export function Dashboard({ userRole, setCurrentPage, userProfile }: DashboardPr
                 <CardHeader>
                   <CardTitle style={{ color: '#033b4a' }}>My Requests</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
                   {requestsError && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
                       {requestsError}
@@ -561,21 +561,10 @@ export function Dashboard({ userRole, setCurrentPage, userProfile }: DashboardPr
                             {statusConfig[request.status as keyof typeof statusConfig]?.label || request.status}
                           </Badge>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <span>₹{Math.round(request.amount || 0).toLocaleString()}</span>
-                          <span>{request.supporters || 0} supporters</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-500">
-                            Posted: {request.created_at ? new Date(request.created_at).toLocaleDateString() : request.postedDate || 'N/A'}
-                          </span>
-                          <Badge className={statusConfig[request.urgency as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-800'}>
-                            {request.urgency || 'medium'}
-                          </Badge>
-                        </div>
-                        {/* Complete Help Button for matched requests */}
+                        
+                        {/* Complete Help Button for matched requests - Moved up for better visibility */}
                         {request.status === 'matched' && (
-                          <div className="mt-3">
+                          <div className="mt-2 mb-2">
                             <Button
                               variant="default"
                               size="sm"
@@ -591,6 +580,19 @@ export function Dashboard({ userRole, setCurrentPage, userProfile }: DashboardPr
                             </Button>
                           </div>
                         )}
+                        
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>₹{Math.round(request.amount || 0).toLocaleString()}</span>
+                          <span>{request.supporters || 0} supporters</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-500">
+                            Posted: {request.created_at ? new Date(request.created_at).toLocaleDateString() : request.postedDate || 'N/A'}
+                          </span>
+                          <Badge className={statusConfig[request.urgency as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-800'}>
+                            {request.urgency || 'medium'}
+                          </Badge>
+                        </div>
                       </div>
                     ))
                   ) : (

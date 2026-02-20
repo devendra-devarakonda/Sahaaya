@@ -770,7 +770,7 @@ export async function completeHelpRequest(
       : 'complete_community_help_request';
 
     const { data, error } = await supabase.rpc(functionName, {
-      request_id: requestId
+      p_request_id: requestId  // ✅ Updated to match function parameter name
     });
 
     if (error) {
@@ -2431,19 +2431,19 @@ export interface DashboardRequest {
 export interface DashboardContribution {
   id: string;
   user_id: string;
-  source_type: 'global' | 'community';
-  source_id: string;
-  community_id?: string;
-  request_id?: string;
-  contribution_type: string;
-  amount?: number;
-  message?: string;
+  request_id: string;
+  request_title: string;
+  category: string;
+  amount: number;
+  urgency: string;
   status: string;
+  request_status: string;
+  report_count: number;
+  contribution_type: string;
+  source_type: 'global' | 'community';
+  community_id?: string;
+  message?: string;
   created_at: string;
-  communities?: {
-    name: string;
-    category: string;
-  };
 }
 
 /**
@@ -2523,19 +2523,20 @@ export async function getUserDashboardContributions(): Promise<ServiceResponse<D
       .from('dashboard_my_contributions')
       .select(`
         id,
+        request_id,
         user_id,
+        request_title,
+        category,
+        amount,
+        urgency,
+        status,
+        request_status,
+        report_count,
+        contribution_type,
         source_type,
         community_id,
-        request_id,
-        contribution_type,
-        amount,
         message,
-        status,
-        created_at,
-        communities (
-          name,
-          category
-        )
+        created_at
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
@@ -2641,4 +2642,109 @@ export function subscribeToDashboardContributions(
     });
 
   return subscription;
+}
+
+// =====================================================
+// FRAUD REPORTING & TRACKING FUNCTIONS
+// =====================================================
+
+/**
+ * Report a help offer (global or community) for fraud
+ * Increments report_count and auto-marks as fraud when count >= 10
+ */
+export async function reportHelpOffer(
+  offerId: string,
+  sourceType: 'global' | 'community'
+): Promise<ServiceResponse<any>> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return {
+        success: false,
+        error: 'User not authenticated'
+      };
+    }
+
+    // Call the appropriate database function
+    const functionName = sourceType === 'global' 
+      ? 'report_help_offer'
+      : 'report_community_help_offer';
+
+    const { data, error } = await supabase.rpc(functionName, {
+      offer_id_param: offerId
+    });
+
+    if (error) {
+      console.error('Error reporting help offer:', error);
+      return {
+        success: false,
+        error: 'Failed to report help offer'
+      };
+    }
+
+    // The function returns a JSON object
+    if (data && !data.success) {
+      return {
+        success: false,
+        error: data.error || 'Failed to report help offer'
+      };
+    }
+
+    return {
+      success: true,
+      data,
+      message: data.message || 'Help offer reported successfully'
+    };
+  } catch (err: any) {
+    console.error('Unexpected error reporting help offer:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
+}
+
+/**
+ * Get contributions filtered by status (matched, completed, fraud)
+ */
+export async function getContributionsByStatus(
+  status: 'matched' | 'completed' | 'fraud'
+): Promise<ServiceResponse<any[]>> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return {
+        success: false,
+        error: 'User not authenticated'
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('dashboard_my_contributions')
+      .select('*')
+      .eq('helper_id', user.id)
+      .eq('status', status)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching contributions by status:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch contributions'
+      };
+    }
+
+    return {
+      success: true,
+      data: data || []
+    };
+  } catch (err: any) {
+    console.error('Unexpected error fetching contributions by status:', err);
+    return {
+      success: false,
+      error: 'An unexpected error occurred'
+    };
+  }
 }

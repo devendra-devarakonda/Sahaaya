@@ -114,7 +114,7 @@ export function CompleteHelpModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle style={{ color: '#033b4a' }}>
             Complete Help Request
@@ -124,106 +124,109 @@ export function CompleteHelpModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Request Details */}
-        <div className="border rounded-lg p-4 mb-4" style={{ backgroundColor: '#f9fefa' }}>
-          <h3 className="mb-2" style={{ color: '#033b4a' }}>{request.title}</h3>
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-            <span>Category: <strong>{request.category}</strong></span>
-            {(request.amount_needed || request.amount) && (
-              <span>Amount: <strong>₹{Math.round(request.amount_needed || request.amount || 0).toLocaleString()}</strong></span>
+        {/* Scrollable Content Area */}
+        <div className="overflow-y-auto flex-1 pr-2">
+          {/* Request Details */}
+          <div className="border rounded-lg p-4 mb-4" style={{ backgroundColor: '#f9fefa' }}>
+            <h3 className="mb-2" style={{ color: '#033b4a' }}>{request.title}</h3>
+            <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+              <span>Category: <strong>{request.category}</strong></span>
+              {(request.amount_needed || request.amount) && (
+                <span>Amount: <strong>₹{Math.round(request.amount_needed || request.amount || 0).toLocaleString()}</strong></span>
+              )}
+              <Badge className={request.source_type === 'community' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}>
+                {request.source_type === 'community' ? '🏘️ Community' : '🌐 Global'}
+              </Badge>
+            </div>
+            {request.description && (
+              <p className="text-sm text-gray-600 mt-2">{request.description}</p>
             )}
-            <Badge className={request.source_type === 'community' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}>
-              {request.source_type === 'community' ? '🏘️ Community' : '🌐 Global'}
-            </Badge>
-          </div>
-          {request.description && (
-            <p className="text-sm text-gray-600 mt-2">{request.description}</p>
-          )}
-        </div>
-
-        {/* Helpers List */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-5 w-5" style={{ color: '#41695e' }} />
-            <h4 style={{ color: '#033b4a' }}>
-              Helpers ({helpers.length})
-            </h4>
           </div>
 
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading helpers...
+          {/* Helpers List */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-5 w-5" style={{ color: '#41695e' }} />
+              <h4 style={{ color: '#033b4a' }}>
+                Helpers ({helpers.length})
+              </h4>
             </div>
-          ) : error ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-              {error}
-            </div>
-          ) : helpers.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>No helpers have offered assistance yet</p>
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {helpers.map((helper) => (
-                <div
-                  key={helper.id}
-                  className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
-                  style={{ backgroundColor: '#f9fefa' }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span style={{ color: '#033b4a' }}>
-                          {helper.helper_name || 'Anonymous Helper'}
-                        </span>
-                        <Badge className={getStatusColor(helper.status)}>
-                          {helper.status}
-                        </Badge>
+
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">
+                Loading helpers...
+              </div>
+            ) : error ? (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                {error}
+              </div>
+            ) : helpers.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p>No helpers have offered assistance yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {helpers.map((helper) => (
+                  <div
+                    key={helper.id}
+                    className="border rounded-lg p-4 hover:shadow-sm transition-shadow"
+                    style={{ backgroundColor: '#f9fefa' }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span style={{ color: '#033b4a' }}>
+                            {helper.helper_name || 'Anonymous Helper'}
+                          </span>
+                          <Badge className={getStatusColor(helper.status)}>
+                            {helper.status}
+                          </Badge>
+                        </div>
+                        
+                        {/* Contact Info */}
+                        <div className="space-y-1 text-sm text-gray-600">
+                          {helper.helper_email && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <a href={`mailto:${helper.helper_email}`} className="hover:underline">
+                                {helper.helper_email}
+                              </a>
+                            </div>
+                          )}
+                          {helper.helper_phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <a href={`tel:${helper.helper_phone}`} className="hover:underline">
+                                {helper.helper_phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
-                      {/* Contact Info */}
-                      <div className="space-y-1 text-sm text-gray-600">
-                        {helper.helper_email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4" />
-                            <a href={`mailto:${helper.helper_email}`} className="hover:underline">
-                              {helper.helper_email}
-                            </a>
-                          </div>
-                        )}
-                        {helper.helper_phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <a href={`tel:${helper.helper_phone}`} className="hover:underline">
-                              {helper.helper_phone}
-                            </a>
-                          </div>
-                        )}
+                      <div className="text-xs text-gray-500">
+                        {new Date(helper.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    
-                    <div className="text-xs text-gray-500">
-                      {new Date(helper.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
 
-                  {/* Helper's Message */}
-                  {helper.message && (
-                    <div className="mt-2 p-2 bg-white rounded border-l-4" style={{ borderLeftColor: '#41695e' }}>
-                      <div className="flex items-start gap-2 text-sm">
-                        <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#41695e' }} />
-                        <p className="text-gray-700 italic">&quot;{helper.message}&quot;</p>
+                    {/* Helper's Message */}
+                    {helper.message && (
+                      <div className="mt-2 p-2 bg-white rounded border-l-4" style={{ borderLeftColor: '#41695e' }}>
+                        <div className="flex items-start gap-2 text-sm">
+                          <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: '#41695e' }} />
+                          <p className="text-gray-700 italic">&quot;{helper.message}&quot;</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Completion Section */}
+        {/* Completion Section - Fixed at bottom */}
         {!showConfirm ? (
           <div className="border-t pt-4 mt-4">
             <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg mb-4">
