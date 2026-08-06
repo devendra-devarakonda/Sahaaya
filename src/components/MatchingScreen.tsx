@@ -27,7 +27,7 @@ import {
   UserCheck,
   Home
 } from 'lucide-react';
-import { MapView, MapRequest, MapCommunity } from './MapView';
+import { MapView, type MapRequest, type MapCommunity } from './MapView';
 import { getBrowseRequests, subscribeToBrowseRequests, unsubscribeChannel, createHelpOffer } from '../utils/supabaseService';
 
 interface MatchingScreenProps {
